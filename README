@@ -2,7 +2,7 @@ NAME
     ex::lib - The same as "lib", but makes relative path absolute.
 
 VERSION
-    Version 0.01
+    Version 0.02
 
 SYNOPSIS
     Simple use like "use lib ...":
@@ -12,38 +12,44 @@ SYNOPSIS
 
 THE GOAL
     The main reason of this library is transformate relative paths to
-    absolute at the "BEGIN" stage, and push transformed to @INC. This is
-    useful, when you running under "mod_perl", use something like
-    "Apache::StatINC", and your application may change working directory.
-    When using common "lib", relative paths stays relative to curernt
-    working directory, So in case of chdir "StatINC" fails to reload module.
+    absolute at the "BEGIN" stage, and push transformed to @INC. Relative
+    path basis is not the current working directory, but the location of
+    file, where the statement is. When using common "lib", relative paths
+    stays relative to curernt working directory,
 
-INSTALLATION
+            # For ex:
+            # script: /opt/scripts/my.pl
+            use ex::lib '../lib';
 
-To install this module, run the following commands:
+            # We run `/opt/scripts/my.pl` having cwd /home/mons
+            # The @INC will contain '/opt/lib';
 
-	perl Makefile.PL
-	make
-	make test
-	make install
+            # We run `./my.pl` having cwd /opt
+            # The @INC will contain '/opt/lib';
 
-SUPPORT AND DOCUMENTATION
+            # We run `../my.pl` having cwd /opt/lib
+            # The @INC will contain '/opt/lib';
 
-After installing, you can find documentation for this module with the
-perldoc command.
+    Also this module is very useful when writing tests, when you want to
+    load strictly the module from ../lib, respecting the test file.
 
-    perldoc ex::lib
+            # t/00-test.t
+            use ex::lib '../lib';
 
-You can also look for information at:
+    Also this is useful, when you running under "mod_perl", use something
+    like "Apache::StatINC", and your application may change working
+    directory. So in case of chdir "StatINC" fails to reload module if the
+    @INC contain relative paths.
 
-    Development of module
-        http://perl-ex.googlecode.com
+BUGS
+    None known
+
+COPYRIGHT & LICENSE
+    Copyright 2007-2009 Mons Anderson.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
 
 AUTHOR
     Mons Anderson, "<mons@cpan.org>"
 
-COPYRIGHT & LICENSE
-    Copyright 2007-2008 Mons Anderson, all rights reserved.
-
-    This program is free software; you can redistribute it and/or modify it
-    under the same terms as Perl itself.
