@@ -3,20 +3,94 @@
 use strict;
 use FindBin;
 use lib '.',"$FindBin::Bin/../lib";
-use Test::More tests => 4;
+use Test::More tests => 11;
+
+my @ORIG;
+BEGIN { @ORIG = @INC }
+our $DIAG = 0;
+
+sub ex () { @INC[0..@INC-@ORIG-1] }
+
+sub diaginc {
+	$DIAG or return;
+	diag +( @_ ? ($_[0].': ') : ( 'Add INC: ') ) . join ', ', map "'$_'", ex;
+}
 
 use ex::lib ();
+
+diaginc();
+
 is( $INC[0], ".", "before import: $INC[0]" );
 ex::lib->import( '.' );
 like( $INC[0], qr{^/}, "after import: $INC[0]" );
 
+diag "Bin = `$FindBin::Bin' ;. is `$INC[0]'";
+
+diaginc();
+
 SKIP: {
-	skip("Cwd required to check correctness", 1)
+	is( $FindBin::Bin, $INC[0], '. => $FindBin::Bin' );
+	skip("Cwd.pm required to check cwd", 1)
 		unless eval "use Cwd (); 1";
-	#is( Cwd::getcwd(), $INC[0], '. => cwd' );
-	my $cwd = Cwd::abs_path(__FILE__);
+	( my $file = __FILE__ ) =~ s{/[^/]+$}{}s;
+	my $cwd = Cwd::abs_path($file);
 	like( $cwd, qr/^\Q$INC[0]\E/, '. => cwd' );
 }
 
+ex::lib->unimport( '.' );
+ok(!ex, 'no ex inc');
+
 like(ex::lib::mkapath(0), qr{^/}, 'path is absolute');
+
+diaginc();
+
+# Next tests are derived from lib::tiny
+
+
+my @dirs = qw(foo bar);
+my @adirs = map "$FindBin::Bin/$_",@dirs;
+#printf "%o\n", umask(0);
+mkdir($_, 0755) or warn "mkdir $_: $!" for @adirs;
+chmod 0755, @adirs or warn "chmod $_: $!"; # do chmod (on some versions mkdir with mode ignore mode)
+
+-e $_ or warn "$_ absent" for @adirs;
+
+ex::lib->import(@dirs);
+
+diaginc();
+is($INC[0],$adirs[0],'add 0');
+is($INC[1],$adirs[1],'add 1');
+
+ex::lib->unimport(@dirs);
+diaginc();
+
+ok(!ex, 'dels paths');
+
+eval {
+    require lib;
+    lib->import(@adirs);
+};
+
+SKIP: {
+    skip 'apparently too old to handle: Unquoted string "lib" may clash with future reserved word at t/00.load.t line 21.', 1 if $@;
+	is($INC[0],$adirs[0],'order same as lib.pm 0');
+	is($INC[1],$adirs[1],'order same as lib.pm 1');
+};
+
+eval {
+    lib->unimport(@adirs);
+};
+
+ex::lib->import( '.' );
+
+exit 0;
+
+END{
+	rmdir $_ for @adirs; # clean up
+}
+
+__END__
 diag "Need more tests for mkapath";
+		# .
+		# ./
+		# .//

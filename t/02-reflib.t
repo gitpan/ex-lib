@@ -6,5 +6,6 @@ use lib '.',"$FindBin::Bin/../lib";
 use Test::More tests => 1;
 use ex::lib sub {};
 
-is(ref $INC[0], 'CODE', 'code in @INC');
+my $chk = shift @INC; # When left bad sub in @INC Test::Builder fails
+is(ref $chk, 'CODE', 'code in @INC');
 
