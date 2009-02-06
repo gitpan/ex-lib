@@ -1,14 +1,22 @@
---- #YAML:1.0
-name:                ex-lib
-version:             0.01
-abstract:            The same as C<lib>, but makes relative path absolute.
-license:             ~
-author:              
-    - Mons Anderson <mons@cpan.org>
-generated_by:        ExtUtils::MakeMaker version 6.44
-distribution_type:   module
-requires:     
-    Test::More:                    0
+---
+abstract: 'The same as C<lib>, but makes relative path absolute.'
+author:
+  - 'Mons Anderson <mons@cpan.org>'
+build_requires:
+  Test::More: 0
+distribution_type: module
+generated_by: 'Module::Install version 0.79'
+license: perl
 meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: ex-lib
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  Cwd: 3.29
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.04
