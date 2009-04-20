@@ -10,11 +10,11 @@ ex::lib - The same as C<lib>, but makes relative path absolute.
 
 =cut
 
-$ex::lib::VERSION = 0.05;
+$ex::lib::VERSION = 0.06;
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 
@@ -68,6 +68,7 @@ Mons Anderson, <mons@cpan.org>
 =cut
 
 use strict;
+use warnings;
 use lib ();
 use Cwd 3.12 qw(abs_path);
 $ex::lib::sep = {
@@ -111,7 +112,7 @@ sub transform {
 
 sub import {
 	shift;
-	_croak("Bad usage. use ".__PACKAGE__." PATH") unless @_;
+	return unless @_;
 	@_ = ( lib => transform @_ = @_ );
 	warn "use @_\n" if DEBUG > 0;
 	goto &lib::import;
@@ -120,7 +121,7 @@ sub import {
 
 sub unimport {
 	shift;
-	_croak("Bad usage. use ".__PACKAGE__." PATH") unless @_;
+	return unless @_;
 	@_ = ( lib => transform @_ = @_ );
 	warn "no @_\n" if DEBUG > 0;
 	goto &lib::unimport;
