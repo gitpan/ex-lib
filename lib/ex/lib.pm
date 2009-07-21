@@ -6,49 +6,21 @@ package ex::lib;
 
 =head1 NAME
 
-ex::lib - The same as C<lib>, but makes relative path absolute.
+ex::lib - The same as lib, but makes relative path absolute. (Obsoleted by lib::abs)
 
 =cut
 
-$ex::lib::VERSION = 0.07;
+$ex::lib::VERSION = '0.90';
 
 =head1 VERSION
 
-Version 0.07
+Version 0.90
 
 =head1 SYNOPSIS
 
-Simple use like C<use lib ...>:
+Don't use this module. It's just a compatibility wrapper for C<lib::abs>
 
-	use ex::lib qw(./mylibs1 ../mylibs2);
-	use ex::lib 'mylibs';
-
-=head1 THE GOAL
-
-The main reason of this library is transformate relative paths to absolute at the C<BEGIN> stage, and push transformed to C<@INC>.
-Relative path basis is not the current working directory, but the location of file, where the statement is.
-When using common C<lib>, relative paths stays relative to curernt working directory, 
-
-	# For ex:
-	# script: /opt/scripts/my.pl
-	use ex::lib '../lib';
-
-	# We run `/opt/scripts/my.pl` having cwd /home/mons
-	# The @INC will contain '/opt/lib';
-
-	# We run `./my.pl` having cwd /opt
-	# The @INC will contain '/opt/lib';
-
-	# We run `../my.pl` having cwd /opt/lib
-	# The @INC will contain '/opt/lib';
-
-Also this module is very useful when writing tests, when you want to load strictly the module from ../lib, respecting the test file.
-
-	# t/00-test.t
-	use ex::lib '../lib';
-
-Also this is useful, when you running under C<mod_perl>, use something like C<Apache::StatINC>, and your application may change working directory.
-So in case of chdir C<StatINC> fails to reload module if the @INC contain relative paths.
+But if you want, see the docs for C<lib::abs>. Interface is the same
 
 =head1 BUGS
 
@@ -69,63 +41,12 @@ Mons Anderson, <mons@cpan.org>
 
 use strict;
 use warnings;
-use lib ();
-use Cwd 3.12 qw(abs_path);
-$ex::lib::sep = {
-	( map { $_ => qr{[^\\/]+$}o } qw(mswin32 netware symbian dos) ),
-	( map { $_ => qr{[^:]+:?$}o } qw(macos) ),
-}->{lc$^O} || qr{[^/]+$}o;
+use lib::abs ();
 
-sub DEBUG () { 0 }; # use constants is heavy
+*ex::lib::import    = \&lib::abs::import;
+*ex::lib::unimport  = \&lib::abs::unimport;
 
-sub _carp  { require Carp; goto &Carp::carp  }
-sub _croak { require Carp; goto &Carp::croak }
-
-sub mkapath($) {
-	my $depth = shift;
-	
-	# Prepare absolute base bath
-	my ($pkg,$file) = (caller($depth))[0,1];
-	warn "file = $file " if DEBUG > 1;
-	$file =~ s/${ex::lib::sep}//s;
-	$file = '.' unless length $file;
-	warn "base path = $file" if DEBUG > 1;
-	my $f = abs_path($file) . '/';
-	warn "source dir = $f " if DEBUG > 1;
-	$f;
-}
-
-sub transform {
-	my $prefix;
-	map {
-		ref || m{^/} ? $_ : do {
-			my $lib = $_;
-			s{^\./+}{};
-			local $!;
-			my $abs = ( $prefix ||= mkapath(2) ) . $_;
-			$_ = abs_path( $abs ) or _croak("Bad path specification: `$lib' => `$abs'" . ($! ? " ($!)" : ''));
-			warn "$lib => $_" if DEBUG > 1;
-			$_;
-		}
-	} @_;
-}
-
-sub import {
-	shift;
-	return unless @_;
-	@_ = ( lib => transform @_ = @_ );
-	warn "use @_\n" if DEBUG > 0;
-	goto &lib::import;
-	return;
-}
-
-sub unimport {
-	shift;
-	return unless @_;
-	@_ = ( lib => transform @_ = @_ );
-	warn "no @_\n" if DEBUG > 0;
-	goto &lib::unimport;
-	return;
-}
+*ex::lib::mkapath   = \&lib::abs::mkapath;
+*ex::lib::path      = \&lib::abs::path;
 
 1;
